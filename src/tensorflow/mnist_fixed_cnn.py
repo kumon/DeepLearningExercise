@@ -6,6 +6,7 @@ IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT
 CATEGORY_NUM = 10
 LEARNING_RATE = 0.05
 FILTER_NUM = 2
+BIAS_CONV = -0.1
 FEATURE_DIM = 100
 KEEP_PROB = 1.0
 TRAINING_LOOP = 20000
@@ -22,8 +23,9 @@ with tf.Graph().as_default():
 
     with tf.name_scope('convolution'):
         W_conv = prewitt_filter()
+        b_conv = tf.constant([BIAS_CONV] * FILTER_NUM, dtype = tf.float32, name='bias_conv')
         x_image = tf.reshape(x, [-1, IMAGE_WIDTH, IMAGE_HEIGHT, 1])
-        h_conv = tf.nn.relu(tf.abs(conv2d(x_image, W_conv)))
+        h_conv = tf.nn.relu(tf.abs(conv2d(x_image, W_conv)) + b_conv)
 
     with tf.name_scope('pooling'):
         scale = 1 / 4.0

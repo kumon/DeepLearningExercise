@@ -27,5 +27,5 @@ def prewitt_filter():
     f = np.zeros(3 * 3 * 1 * 2).reshape(3, 3, 1, 2)
     f[:, :, 0, 0] = v
     f[:, :, 0, 1] = h
-    return tf.constant(f, dtype = tf.float32)
+    return tf.constant(f, dtype = tf.float32, name='prewitt')
 
