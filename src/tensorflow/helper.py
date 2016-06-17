@@ -6,6 +6,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 import numpy as np
 import tensorflow as tf
+from scipy import spatial
+import operator
 
 def weight_variable(shape, name=None):
     initial = tf.truncated_normal(shape, stddev=0.1)
