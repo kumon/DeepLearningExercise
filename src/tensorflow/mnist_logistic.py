@@ -7,14 +7,16 @@ TRAINING_LOOP = 20000
 BATCH_SIZE = 100
 SUMMARY_DIR = 'log_logistic'
 SUMMARY_INTERVAL = 1000
+BUFFER_SIZE = 1000
 EPS = 1e-10
 
-mnist = input_data.read_data_sets('data', one_hot=True)
-
-def gen_label(labels):
-    return list(map(lambda x: [1] if x[0] == 1 else [0], labels))
-
 with tf.Graph().as_default():
+    mnist_train, mnist_test = mnist_samples(binalize=True)
+    n_train = mnist_train[0].shape[0]
+    ds = tf.data.Dataset.from_tensor_slices(mnist_train)
+    ds = ds.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat(int(TRAINING_LOOP * BATCH_SIZE / n_train) + 1)
+    next_batch = ds.make_one_shot_iterator().get_next()
+
     with tf.name_scope('input'):
         y_ = tf.placeholder(tf.float32, [None, CATEGORY_NUM], name='labels')
         x = tf.placeholder(tf.float32, [None, IMAGE_SIZE], name='input_images')
@@ -40,8 +42,7 @@ with tf.Graph().as_default():
 
         sess.run(tf.global_variables_initializer())
         for i in range(TRAINING_LOOP + 1):
-            images, org_labels = mnist.train.next_batch(BATCH_SIZE)
-            labels = gen_label(org_labels)
+            images, labels = sess.run(next_batch)
             sess.run(train_step, {x: images, y_: labels})
 
             if i % SUMMARY_INTERVAL == 0:
@@ -52,5 +53,5 @@ with tf.Graph().as_default():
                 train_writer.add_summary(summary, i)
                 summary = sess.run(
                         tf.summary.merge([accuracy_summary]),
-                        {x: mnist.test.images, y_: gen_label(mnist.test.labels)})
+                        {x: mnist_test[0], y_: mnist_test[1]})
                 test_writer.add_summary(summary, i)
