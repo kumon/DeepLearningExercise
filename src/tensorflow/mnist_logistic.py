@@ -11,10 +11,9 @@ BUFFER_SIZE = 1000
 EPS = 1e-10
 
 with tf.Graph().as_default():
-    mnist_train, mnist_test = mnist_samples(binalize=True)
-    n_train = mnist_train[0].shape[0]
-    ds = tf.data.Dataset.from_tensor_slices(mnist_train)
-    ds = ds.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat(int(TRAINING_LOOP * BATCH_SIZE / n_train) + 1)
+    (X_train, y_train), (X_test, y_test) = mnist_samples(binalize=True)
+    ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+    ds = ds.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat(int(TRAINING_LOOP * BATCH_SIZE / X_train.shape[0]) + 1)
     next_batch = ds.make_one_shot_iterator().get_next()
 
     with tf.name_scope('input'):
@@ -24,11 +23,11 @@ with tf.Graph().as_default():
     with tf.name_scope('readout'):
         W = weight_variable([IMAGE_SIZE, CATEGORY_NUM], name='weight')
         b = bias_variable([CATEGORY_NUM], name='bias')
-        #y = tf.nn.sigmoid(tf.matmul(x, W) + b)
-        y = tf.clip_by_value(tf.nn.sigmoid(tf.matmul(x, W) + b), EPS, 1.0 - EPS)
+        y = tf.nn.sigmoid(tf.matmul(x, W) + b)
 
     with tf.name_scope('optimize'):
-        log_likelihood = tf.reduce_mean(tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y), reduction_indices=[1]))
+        y = tf.clip_by_value(y, EPS, 1.0 - EPS)
+        log_likelihood = tf.reduce_mean(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
         train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(-log_likelihood)
         log_likelihood_summary = tf.summary.scalar('log likelihood', log_likelihood)
 
@@ -46,12 +45,12 @@ with tf.Graph().as_default():
             sess.run(train_step, {x: images, y_: labels})
 
             if i % SUMMARY_INTERVAL == 0:
-                print('step %d' % i)
-                summary = sess.run(
-                        tf.summary.merge([log_likelihood_summary, accuracy_summary]),
+                train_acc, summary = sess.run(
+                        [accuracy, tf.summary.merge([log_likelihood_summary, accuracy_summary])],
                         {x: images, y_: labels})
                 train_writer.add_summary(summary, i)
-                summary = sess.run(
-                        tf.summary.merge([accuracy_summary]),
-                        {x: mnist_test[0], y_: mnist_test[1]})
+                test_acc, summary = sess.run(
+                        [accuracy, tf.summary.merge([accuracy_summary])],
+                        {x: X_test, y_: y_test})
                 test_writer.add_summary(summary, i)
+                print(f'step: {i}, train-acc: {train_acc}, test-acc: {test_acc}')
