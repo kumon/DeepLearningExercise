@@ -3,7 +3,7 @@ from helper import *
 IMAGE_SIZE = 28 * 28
 CATEGORY_NUM = 1
 LEARNING_RATE = 0.1
-EPOCHS = 20
+EPOCHS = 30
 BATCH_SIZE = 100
 LOG_DIR = 'log_logistic'
 EPS = 1e-10
