@@ -6,11 +6,16 @@ LEARNING_RATE = 0.1
 TRAINING_LOOP = 20000
 BATCH_SIZE = 100
 SUMMARY_DIR = 'log_softmax'
-SUMMARY_INTERVAL = 100
-
-mnist = input_data.read_data_sets('data', one_hot=True)
+SUMMARY_INTERVAL = 1000
+BUFFER_SIZE = 1000
+EPS = 1e-10
 
 with tf.Graph().as_default():
+    (X_train, y_train), (X_test, y_test) = mnist_samples(flatten_image=True)
+    ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+    ds = ds.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat(int(TRAINING_LOOP * BATCH_SIZE / X_train.shape[0]) + 1)
+    next_batch = ds.make_one_shot_iterator().get_next()
+
     with tf.name_scope('input'):
         y_ = tf.placeholder(tf.float32, [None, CATEGORY_NUM], name='labels')
         x = tf.placeholder(tf.float32, [None, IMAGE_SIZE], name='input_images')
@@ -21,27 +26,31 @@ with tf.Graph().as_default():
         y = tf.nn.softmax(tf.matmul(x, W) + b)
 
     with tf.name_scope('optimize'):
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+        y = tf.clip_by_value(y, EPS, 1.0)
+        cross_entropy = -tf.reduce_mean(y_ * tf.log(y))
         train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cross_entropy)
-        cross_entropy_summary = tf.scalar_summary('cross entropy', cross_entropy)
+        cross_entropy_summary = tf.summary.scalar('cross entropy', cross_entropy)
 
     with tf.Session() as sess:
-        train_writer = tf.train.SummaryWriter(SUMMARY_DIR + '/train', sess.graph)
-        test_writer = tf.train.SummaryWriter(SUMMARY_DIR + '/test', sess.graph)
+        train_writer = tf.summary.FileWriter(SUMMARY_DIR + '/train', sess.graph)
+        test_writer = tf.summary.FileWriter(SUMMARY_DIR + '/test')
 
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        train_accuracy_summary = tf.scalar_summary('accuracy', accuracy)
-        test_accuracy_summary = tf.scalar_summary('accuracy', accuracy)
+        accuracy_summary = tf.summary.scalar('accuracy', accuracy)
 
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         for i in range(TRAINING_LOOP + 1):
-            batch = mnist.train.next_batch(BATCH_SIZE)
-            sess.run(train_step, {x: batch[0], y_: batch[1]})
+            images, labels = sess.run(next_batch)
+            sess.run(train_step, {x: images, y_: labels})
 
             if i % SUMMARY_INTERVAL == 0:
-                print('step %d' % i)
-                summary = sess.run(tf.merge_summary([cross_entropy_summary, train_accuracy_summary]), {x: batch[0], y_: batch[1]})
+                train_acc, summary = sess.run(
+                        [accuracy, tf.summary.merge([cross_entropy_summary, accuracy_summary])],
+                        {x: images, y_: labels})
                 train_writer.add_summary(summary, i)
-                summary = sess.run(tf.merge_summary([test_accuracy_summary]), {x: mnist.test.images, y_: mnist.test.labels})
+                test_acc, summary = sess.run(
+                        [accuracy, tf.summary.merge([cross_entropy_summary, accuracy_summary])],
+                        {x: X_test, y_: y_test})
                 test_writer.add_summary(summary, i)
+                print(f'step: {i}, train-acc: {train_acc}, test-acc: {test_acc}')

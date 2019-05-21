@@ -11,7 +11,7 @@ BUFFER_SIZE = 1000
 EPS = 1e-10
 
 with tf.Graph().as_default():
-    (X_train, y_train), (X_test, y_test) = mnist_samples(binalize=True)
+    (X_train, y_train), (X_test, y_test) = mnist_samples(flatten_image=True, binalize_label=True)
     ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     ds = ds.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat(int(TRAINING_LOOP * BATCH_SIZE / X_train.shape[0]) + 1)
     next_batch = ds.make_one_shot_iterator().get_next()
@@ -26,7 +26,7 @@ with tf.Graph().as_default():
         y = tf.nn.sigmoid(tf.matmul(x, W) + b)
 
     with tf.name_scope('optimize'):
-        y = tf.clip_by_value(y, EPS, 1.0 - EPS)
+        y = tf.clip_by_value(y, EPS, 1.0 + EPS)
         log_likelihood = tf.reduce_mean(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
         train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(-log_likelihood)
         log_likelihood_summary = tf.summary.scalar('log likelihood', log_likelihood)
