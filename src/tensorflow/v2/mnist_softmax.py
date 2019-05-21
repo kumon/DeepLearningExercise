@@ -1,16 +1,16 @@
 from helper import *
 
 IMAGE_SIZE = 28 * 28
-CATEGORY_NUM = 1
+CATEGORY_NUM = 10
 LEARNING_RATE = 0.1
 EPOCHS = 30
 BATCH_SIZE = 100
-LOG_DIR = 'log_logistic'
+LOG_DIR = 'log_softmax'
 EPS = 1e-10
 
 def loss_fn(y_true, y):
-    y = tf.clip_by_value(y, EPS, 1.0 + EPS)
-    return -tf.reduce_mean(y_true * tf.math.log(y) + (1 - y_true) * tf.math.log(1 - y))
+    y = tf.clip_by_value(y, EPS, 1.0)
+    return -tf.reduce_mean(y_true * tf.math.log(y))
 
 class LR(tf.keras.layers.Layer):
     def __init__(self, units, *args, **kwargs):
@@ -32,10 +32,10 @@ class LR(tf.keras.layers.Layer):
         self.built = True
 
     def call(self, x):
-        return tf.nn.sigmoid(tf.matmul(x, self.W) + self.b)
+        return tf.nn.softmax(tf.matmul(x, self.W) + self.b)
 
 if __name__ == '__main__':
-    (X_train, y_train), (X_test, y_test) = mnist_samples(flatten_image=True, binalize_label=True)
+    (X_train, y_train), (X_test, y_test) = mnist_samples(flatten_image=True)
 
     model = tf.keras.models.Sequential()
     model.add(LR(CATEGORY_NUM, input_shape=(IMAGE_SIZE,)))
