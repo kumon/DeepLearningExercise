@@ -4,12 +4,12 @@ from scipy import spatial
 import operator
 
 def weight_variable(shape, name=None):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial, name=name)
+    initial = tf.glorot_uniform_initializer()
+    return tf.Variable(initial(shape), name=name)
 
 def bias_variable(shape, name=''):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial, name=name)
+    initial = tf.zeros_initializer()
+    return tf.Variable(initial(shape), name=name)
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')

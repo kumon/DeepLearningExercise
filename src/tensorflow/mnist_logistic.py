@@ -27,7 +27,7 @@ with tf.Graph().as_default():
 
     with tf.name_scope('optimize'):
         y = tf.clip_by_value(y, EPS, 1.0 + EPS)
-        log_likelihood = tf.reduce_mean(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
+        log_likelihood = tf.reduce_mean(tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y), axis=1))
         train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(-log_likelihood)
         log_likelihood_summary = tf.summary.scalar('log likelihood', log_likelihood)
 

@@ -22,12 +22,12 @@ class LR(tf.keras.layers.Layer):
         self.W = self.add_weight(
             name='weight',
             shape=(input_dim, self.units),
-            initializer=tf.keras.initializers.TruncatedNormal(stddev=0.1),
+            initializer=tf.keras.initializers.GlorotUniform()
         )
         self.b = self.add_weight(
             name='bias',
             shape=(self.units,),
-            initializer=tf.keras.initializers.Constant(0.1),
+            initializer=tf.keras.initializers.Zeros()
         )
         self.built = True
 

@@ -10,6 +10,7 @@ SUMMARY_INTERVAL = 1000
 BUFFER_SIZE = 1000
 EPS = 1e-10
 
+
 with tf.Graph().as_default():
     (X_train, y_train), (X_test, y_test) = mnist_samples(flatten_image=True)
     ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
@@ -27,7 +28,7 @@ with tf.Graph().as_default():
 
     with tf.name_scope('optimize'):
         y = tf.clip_by_value(y, EPS, 1.0)
-        cross_entropy = -tf.reduce_mean(y_ * tf.log(y))
+        cross_entropy = -tf.reduce_mean(tf.reduce_sum(y_ * tf.log(y), axis=1))
         train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cross_entropy)
         cross_entropy_summary = tf.summary.scalar('cross entropy', cross_entropy)
 
