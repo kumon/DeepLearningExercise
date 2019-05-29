@@ -11,26 +11,20 @@ def bias_variable(shape, name=''):
     initial = tf.zeros_initializer()
     return tf.Variable(initial(shape), name=name)
 
-def conv2d(x, W):
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def max_pool_2x2(x):
-    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-
 def prewitt_filter():
     v = np.array([[ 1, 0, -1]] * 3)
     h = v.swapaxes(0, 1)
-    f = np.zeros(3 * 3 * 1 * 2).reshape(3, 3, 1, 2)
-    f[:, :, 0, 0] = v
-    f[:, :, 0, 1] = h
-    return tf.constant(f, dtype = tf.float32, name='prewitt')
+    return tf.constant(np.dstack([v, h]).reshape((3, 3, 1, 2)), dtype = tf.float32, name='prewitt')
 
 def mnist_samples(flatten_image=False, binalize_label=False):
     (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
 
+    def normalize(images):
+        return images.astype(np.float32) / 255.0
+
     def flatten(images):
         d, w, h = images.shape
-        return images.reshape(d, w * h).astype(np.float32) / 255.0
+        return images.reshape(d, w * h)
 
     def binalize(labels):
         return list(map(lambda x: [1] if x == 1 else [0], labels))
@@ -38,6 +32,7 @@ def mnist_samples(flatten_image=False, binalize_label=False):
     def one_hot_label(labels):
         return tf.keras.utils.to_categorical(labels, 10)
 
+    X_train, X_test = normalize(X_train), normalize(X_test)
     if flatten_image:
         X_train, X_test = flatten(X_train), flatten(X_test)
 
