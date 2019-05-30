@@ -4,9 +4,10 @@ IMAGE_WIDTH, IMAGE_HEIGHT = 28, 28
 CATEGORY_NUM = 10
 LEARNING_RATE = 0.1
 FILTER_NUM = 2
+FEATURE_DIM = 100
 EPOCHS = 15
 BATCH_SIZE = 100
-LOG_DIR = 'log_fixed_cnn'
+LOG_DIR = 'log_fixed_cnn_fc'
 
 
 class Prewitt(tf.keras.layers.Layer):
@@ -26,6 +27,7 @@ if __name__ == '__main__':
     model = tf.keras.models.Sequential()
     model.add(Prewitt((IMAGE_HEIGHT * IMAGE_WIDTH, FILTER_NUM), input_shape=(IMAGE_HEIGHT, IMAGE_WIDTH)))
     model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(FEATURE_DIM, activation='relu'))
     model.add(tf.keras.layers.Dense(CATEGORY_NUM, activation='softmax'))
     model.compile(
             loss='categorical_crossentropy',
