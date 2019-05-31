@@ -39,7 +39,7 @@ with tf.Graph().as_default():
         b_conv2 = bias_variable([FILTER_NUM2], name='bias_conv')
         h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool, W_conv2, strides=[1, 1, 1, 1], padding='SAME') + b_conv2)
 
-    with tf.name_scope('pooling'):
+    with tf.name_scope('pooling2'):
         h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     with tf.name_scope('fully-connected'):
